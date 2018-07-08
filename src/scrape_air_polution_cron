@@ -1,0 +1,2 @@
+* * * * * root python /scripts/scrape_air_polution.py >> /var/log/cron.log 2>&1
+# aaa
