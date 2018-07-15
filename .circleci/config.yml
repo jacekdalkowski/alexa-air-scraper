@@ -67,6 +67,7 @@ jobs:
 
       - run:
           command: |
+            sudo apt-get update
             sudo apt install rsync
             python docker_digitalocean.py $PROD_ENV
 
