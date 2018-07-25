@@ -14,20 +14,20 @@ def is_float(value):
 	except:
 		return False
 
-def save_air_data(air_data):
+def save_air_data(air_data, city):
 	mongo_client = MongoClient('mongodb://air-db:27017')
 	airpolution_db = mongo_client['airpolution']
 	airpolution_col = airpolution_db['airpolution']
 
 	airpolution_col.update_one(
-		{'app': 'cracow'}, 
+		{'app': city}, 
 		{'$set': {
 			'air': air_data,
 		 	'timestamp': datetime.datetime.utcnow() 
 		}}, 
 		upsert=True)
 
-def fetch_air_data():
+def fetch_air_data_for_cracow():
 	#page = requests.get('http://powietrzewkrakowie.pl/')
 	page = requests.get('http://powietrze.gios.gov.pl/pjp/current/station_details/table/10121/1/0')
 	dom = html.fromstring(page.content)
@@ -43,6 +43,19 @@ def fetch_air_data():
 		return {
 			'timestamp': datetime.datetime.utcnow(),
 			'pm_10': latest_pm_10_level_float
+		}
+	return None
+
+def fetch_air_data_for_nyc():
+	page = requests.get('http://aqicn.org/city/usa/newyork')
+	dom = html.fromstring(page.content)
+	#quality = dom.xpath('//h3[1]/span/text()')
+	quality = dom.xpath('//div[@id="aqiwgtvalue"]/text()')[0]
+	if quality and is_float(quality):
+		quality_float = float(quality)
+		return {
+			'timestamp': datetime.datetime.utcnow(),
+			'pm_10': quality_float
 		}
 	return None
 
@@ -85,10 +98,15 @@ def save_scrape_status(state, timestamp, scrape_script_version):
 
 save_scrape_status('start', datetime.datetime.utcnow(), scrape_script_version)
 
-air_data = fetch_air_data()
-print 'air_data fetched: '
+air_data = fetch_air_data_for_cracow()
+print 'air_data fetched for cracow: '
 pprint.pprint(air_data)
-save_air_data(air_data)
+save_air_data(air_data, 'cracow')
+
+air_data = fetch_air_data_for_nyc()
+print 'air_data fetched for nyc: '
+pprint.pprint(air_data)
+save_air_data(air_data, 'nyc')
 
 weather_data = fetch_weather_data('3094802')
 print 'weather_data fetched: '
