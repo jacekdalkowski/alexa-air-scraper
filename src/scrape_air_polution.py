@@ -79,13 +79,13 @@ def fetch_weather_data(city_id):
 	weather_data['timestamp'] = datetime.datetime.utcnow()
 	return weather_data
 
-def save_scrape_status(state, timestamp, scrape_script_version):
+def save_scrape_status(app, state, timestamp, scrape_script_version):
 	mongo_client = MongoClient('mongodb://air-db:27017')
 	airpolution_db = mongo_client['airpolution']
 	airpolution_col = airpolution_db['airpolution']
 
 	airpolution_col.update_one(
-		{'app': 'cracow'}, 
+		{'app': app}, 
 		{'$set': {
 			'status': {
 				'state': state,
@@ -96,22 +96,30 @@ def save_scrape_status(state, timestamp, scrape_script_version):
 		upsert=True)
 
 
-save_scrape_status('start', datetime.datetime.utcnow(), scrape_script_version)
+save_scrape_status('cracow', 'start', datetime.datetime.utcnow(), scrape_script_version)
 
 air_data = fetch_air_data_for_cracow()
 print 'air_data fetched for cracow: '
 pprint.pprint(air_data)
 save_air_data(air_data, 'cracow')
 
-air_data = fetch_air_data_for_nyc()
-print 'air_data fetched for nyc: '
-pprint.pprint(air_data)
-save_air_data(air_data, 'nyc')
-
 weather_data = fetch_weather_data('3094802')
 print 'weather_data fetched: '
 pprint.pprint(weather_data)
 save_weather_data(weather_data)
 
-save_scrape_status('finished', datetime.datetime.utcnow(), scrape_script_version)
+save_scrape_status('cracow', 'finished', datetime.datetime.utcnow(), scrape_script_version)
+
+
+
+save_scrape_status('nyc', 'start', datetime.datetime.utcnow(), scrape_script_version)
+
+air_data = fetch_air_data_for_nyc()
+print 'air_data fetched for nyc: '
+pprint.pprint(air_data)
+save_air_data(air_data, 'nyc')
+
+save_scrape_status('nyc', 'finished', datetime.datetime.utcnow(), scrape_script_version)
+
+
 
