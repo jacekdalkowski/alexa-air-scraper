@@ -47,10 +47,15 @@ def fetch_air_data_for_cracow():
 	return None
 
 def fetch_air_data_for_nyc():
-	page = requests.get('http://aqicn.org/city/usa/newyork')
+	page = requests.get('http://aqicn.org/city/usa/newyork?a=213', headers={
+		'Cache-Control': 'no-cache',
+		'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
+	})
 	dom = html.fromstring(page.content)
-	#quality = dom.xpath('//h3[1]/span/text()')
 	quality = dom.xpath('//div[@id="aqiwgtvalue"]/text()')[0]
+	print "Quality NYC: " + quality
+	updateTime = dom.xpath('//span[@id="aqiwgtutime"]/text()')[0]
+	print "Quality NYC update time: " + updateTime
 	if quality and is_float(quality):
 		quality_float = float(quality)
 		return {
@@ -96,6 +101,19 @@ def save_scrape_status(app, state, timestamp, scrape_script_version):
 		upsert=True)
 
 
+save_scrape_status('nyc', 'start', datetime.datetime.utcnow(), scrape_script_version)
+
+air_data = fetch_air_data_for_nyc()
+print 'air_data fetched for nyc: '
+pprint.pprint(air_data)
+save_air_data(air_data, 'nyc')
+
+save_scrape_status('nyc', 'finished', datetime.datetime.utcnow(), scrape_script_version)
+
+
+
+
+
 save_scrape_status('cracow', 'start', datetime.datetime.utcnow(), scrape_script_version)
 
 air_data = fetch_air_data_for_cracow()
@@ -112,14 +130,9 @@ save_scrape_status('cracow', 'finished', datetime.datetime.utcnow(), scrape_scri
 
 
 
-save_scrape_status('nyc', 'start', datetime.datetime.utcnow(), scrape_script_version)
 
-air_data = fetch_air_data_for_nyc()
-print 'air_data fetched for nyc: '
-pprint.pprint(air_data)
-save_air_data(air_data, 'nyc')
 
-save_scrape_status('nyc', 'finished', datetime.datetime.utcnow(), scrape_script_version)
+
 
 
 
