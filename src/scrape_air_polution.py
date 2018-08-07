@@ -46,16 +46,16 @@ def fetch_air_data_for_cracow():
 		}
 	return None
 
-def fetch_air_data_for_nyc():
-	page = requests.get('http://aqicn.org/city/usa/newyork?a=213', headers={
+def fetch_air_data_from_aqicn(url, city_id):
+	page = requests.get(url, headers={
 		'Cache-Control': 'no-cache',
 		'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
 	})
 	dom = html.fromstring(page.content)
 	quality = dom.xpath('//div[@id="aqiwgtvalue"]/text()')[0]
-	print "Quality NYC: " + quality
+	print "Quality " + city_id + ": " + quality
 	updateTime = dom.xpath('//span[@id="aqiwgtutime"]/text()')[0]
-	print "Quality NYC update time: " + updateTime
+	print "Quality " + city_id + " update time: " + updateTime
 	if quality and is_float(quality):
 		quality_float = float(quality)
 		return {
@@ -63,6 +63,15 @@ def fetch_air_data_for_nyc():
 			'pm_10': quality_float
 		}
 	return None
+
+def fetch_air_data_for_nyc():
+	return fetch_air_data_from_aqicn('http://aqicn.org/city/usa/newyork?a=213', 'NYC')
+
+def fetch_air_data_for_la():
+	return fetch_air_data_from_aqicn('http://aqicn.org/city/losangeles/los-angeles-north-main-street/', 'LA')
+
+def fetch_air_data_for_vancouver():
+	return fetch_air_data_from_aqicn('http://aqicn.org/city/vancouver', 'Vancouver')
 
 def save_weather_data(weather_data):
 	mongo_client = MongoClient('mongodb://air-db:27017')
@@ -110,6 +119,31 @@ save_air_data(air_data, 'nyc')
 
 save_scrape_status('nyc', 'finished', datetime.datetime.utcnow(), scrape_script_version)
 
+
+
+
+
+save_scrape_status('la', 'start', datetime.datetime.utcnow(), scrape_script_version)
+
+air_data = fetch_air_data_for_la()
+print 'air_data fetched for la: '
+pprint.pprint(air_data)
+save_air_data(air_data, 'la')
+
+save_scrape_status('la', 'finished', datetime.datetime.utcnow(), scrape_script_version)
+
+
+
+
+
+save_scrape_status('Vancouver', 'start', datetime.datetime.utcnow(), scrape_script_version)
+
+air_data = fetch_air_data_for_vancouver()
+print 'air_data fetched for Vancouver: '
+pprint.pprint(air_data)
+save_air_data(air_data, 'Vancouver')
+
+save_scrape_status('Vancouver', 'finished', datetime.datetime.utcnow(), scrape_script_version)
 
 
 
